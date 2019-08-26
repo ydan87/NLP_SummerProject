@@ -1,37 +1,19 @@
 from __future__ import unicode_literals, print_function, division
 import time
 import math
-import os
 import random
-
 import torch
 import torch.nn as nn
 from torch import optim
-import pandas as pd
+from core.lang import EOS_token, SOS_token
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import numpy as np
 
-from core.lang import Lang, EOS_token, SOS_token
-from core.string_utils import normalize_string
-from models.attention_decoder_rnn import AttentionDecoderRNN
-from models.encoder_rnn import EncoderRNN
 
-dataset_folder = 'dataset/number_word_std'
+teacher_forcing_ratio = 0.5
 
-dev_file_path = os.path.join(dataset_folder, 'number_word_std.dev.json')
-test_file_path = os.path.join(dataset_folder, 'number_word_std.test.json')
 
-math_train = pd.read_json(dev_file_path)
-math_train.equations = math_train.equations.apply(lambda x: '; '.join(x))
-
-math_test = pd.read_json(test_file_path)
-math_test.equations = math_test.equations.apply(lambda x: '; '.join(x))
-
-MAX_LENGTH = max(math_train.text.apply(lambda x: len(x.split(' '))).max(),
-                 math_test.text.apply(lambda x: len(x.split(' '))).max())
-
-def showPlot(points):
+def show_plot(points):
     plt.figure()
     fig, ax = plt.subplots()
     # this locator puts ticks at regular intervals
@@ -40,39 +22,37 @@ def showPlot(points):
     plt.plot(points)
 
 
-def asMinutes(s):
+def as_minutes(s):
     m = math.floor(s / 60)
     s -= m * 60
     return '%dm %ds' % (m, s)
 
 
-def timeSince(since, percent):
+def time_since(since, percent):
     now = time.time()
     s = now - since
-    es = s / (percent)
+    es = s / percent
     rs = es - s
-    return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
-
-teacher_forcing_ratio = 0.5
+    return '%s (- %s)' % (as_minutes(s), as_minutes(rs))
 
 
-def indexesFromSentence(lang, sentence):
+def indexes_from_sentence(lang, sentence):
     return [lang.word2index[word] for word in sentence.split(' ')]
 
 
-def tensorFromSentence(lang, sentence):
-    indexes = indexesFromSentence(lang, sentence)
+def tensor_from_sentence(device, lang, sentence):
+    indexes = indexes_from_sentence(lang, sentence)
     indexes.append(EOS_token)
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
 
-def tensorsFromPair(pair):
-    input_tensor = tensorFromSentence(input_lang, pair[0])
-    target_tensor = tensorFromSentence(output_lang, pair[1])
+def tensors_from_pair(device, input_lang, output_lang, pair):
+    input_tensor = tensor_from_sentence(device, input_lang, pair[0])
+    target_tensor = tensor_from_sentence(device, output_lang, pair[1])
     return (input_tensor, target_tensor)
 
 
-def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length=MAX_LENGTH):
+def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length):
     encoder_hidden = encoder.initHidden()
 
     encoder_optimizer.zero_grad()
@@ -123,16 +103,16 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, deco
 
     return loss.item() / target_length
 
-def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, learning_rate=0.01):
+
+def train_iters(device, encoder, decoder, input_lang, output_lang, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
     plot_loss_total = 0  # Reset every plot_every
 
-    encoder_optimizer = optim.Adam(encoder.parameters())#, lr=learning_rate)
-    decoder_optimizer = optim.Adam(decoder.parameters())#, lr=learning_rate)
-    training_pairs = [tensorsFromPair(random.choice(train_pairs)) \
-                      for i in range(n_iters)]
+    encoder_optimizer = optim.Adam(encoder.parameters())  # , lr=learning_rate)
+    decoder_optimizer = optim.Adam(decoder.parameters())  # , lr=learning_rate)
+    training_pairs = [tensors_from_pair(device, input_lang, output_lang, random.choice(train_pairs)) for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
     for iter in range(1, n_iters + 1):
@@ -140,15 +120,15 @@ def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, lear
         input_tensor = training_pair[0]
         target_tensor = training_pair[1]
 
-        loss = train(input_tensor, target_tensor, encoder,
-                     decoder, encoder_optimizer, decoder_optimizer, criterion)
+        loss = train(device, input_tensor, target_tensor, encoder,
+                     decoder, encoder_optimizer, decoder_optimizer, criterion, max_len)
         print_loss_total += loss
         plot_loss_total += loss
 
         if iter % print_every == 0:
             print_loss_avg = print_loss_total / print_every
             print_loss_total = 0
-            print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
+            print('%s (%d %d%%) %.4f' % (time_since(start, iter / n_iters),
                                          iter, iter / n_iters * 100, print_loss_avg))
 
         if iter % plot_every == 0:
@@ -156,12 +136,12 @@ def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, lear
             plot_losses.append(plot_loss_avg)
             plot_loss_total = 0
 
-    showPlot(plot_losses)
+    show_plot(plot_losses)
 
 
-def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
+def evaluate(device, encoder, decoder, input_lang, output_lang, sentence, max_length):
     with torch.no_grad():
-        input_tensor = tensorFromSentence(input_lang, sentence)
+        input_tensor = tensor_from_sentence(device, input_lang, sentence)
         input_length = input_tensor.size()[0]
         encoder_hidden = encoder.initHidden()
 
@@ -195,44 +175,18 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
         return decoded_words, decoder_attentions[:di + 1]
 
 
-def evaluateRandomly(encoder, decoder, n=10):
+def evaluate_randomly(device, encoder, decoder, input_lang, output_lang, test_pairs, max_len, n=10):
     for i in range(n):
         pair = random.choice(test_pairs)
         print('>', pair[0])
         print('=', pair[1])
-        output_words, attentions = evaluate(encoder, decoder, pair[0])
+        output_words, attentions = evaluate(device, encoder, decoder, input_lang, output_lang, pair[0], max_len)
         output_sentence = ' '.join(output_words)
         print('<', output_sentence)
         print('')
 
 
-math_train.equations = math_train.equations.apply(lambda x: normalize_string(x))
-math_test.equations = math_test.equations.apply(lambda x: normalize_string(x))
-
-input_lang = Lang('text')
-output_lang = Lang('equations')
-train_pairs = [list(x) for x in math_train[['text', 'equations']].to_records(index=False)]
-test_pairs = [list(x) for x in math_test[['text', 'equations']].to_records(index=False)]
-
-
-for pairs in [train_pairs, test_pairs]:
-    for pair in pairs:
-        input_lang.add_sentence(pair[0])
-        output_lang.add_sentence(pair[1])
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-hidden_size = 256
-
-encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
-attn_decoder1 = AttentionDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.2, max_length=MAX_LENGTH).to(device)
-
-trainIters(encoder1, attn_decoder1, 75000, print_every=5000)
-
-evaluateRandomly(encoder1, attn_decoder1)
-
-
-def showAttention(input_sentence, output_words, attentions):
+def show_attention(input_sentence, output_words, attentions):
     # Set up figure with colorbar
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -251,14 +205,9 @@ def showAttention(input_sentence, output_words, attentions):
     plt.show()
 
 
-def evaluateAndShowAttention(input_sentence):
-    output_words, attentions = evaluate(
-        encoder1, attn_decoder1, input_sentence)
+def evaluate_and_show_attention(device, encoder, decoder, input_lang, output_lang, max_len, input_sentence):
+    output_words, attentions = evaluate(device, encoder, decoder, input_lang, output_lang, input_sentence, max_len)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
-    print (len(output_words))
-    showAttention(input_sentence, output_words, attentions)
-
-
-evaluateAndShowAttention("the sum of the digits of a 2-digit number is 7. The tens digit is one less than 3 times the units digit. Find the number.")
-
+    print(len(output_words))
+    show_attention(input_sentence, output_words, attentions)
