@@ -34,5 +34,5 @@ class AttentionDecoderRNN(nn.Module):
         output = F.log_softmax(self.out(output[0]), dim=1)
         return output, hidden, attn_weights
 
-    def initHidden(self):
+    def init_hidden(self):
         return torch.zeros(1, 1, self.hidden_size)

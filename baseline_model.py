@@ -53,7 +53,7 @@ def tensors_from_pair(device, input_lang, output_lang, pair):
 
 
 def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length):
-    encoder_hidden = encoder.initHidden()
+    encoder_hidden = encoder.init_hidden()
 
     encoder_optimizer.zero_grad()
     decoder_optimizer.zero_grad()
@@ -143,7 +143,7 @@ def evaluate(device, encoder, decoder, input_lang, output_lang, sentence, max_le
     with torch.no_grad():
         input_tensor = tensor_from_sentence(device, input_lang, sentence)
         input_length = input_tensor.size()[0]
-        encoder_hidden = encoder.initHidden()
+        encoder_hidden = encoder.init_hidden()
 
         encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=device)
 
