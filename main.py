@@ -41,7 +41,7 @@ hidden_size = 256
 encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
 attn_decoder1 = AttentionDecoderRNN(hidden_size, output_lang.n_words, dropout_p=0.2, max_length=MAX_LENGTH).to(device)
 
-train_iters(device, encoder1, attn_decoder1, input_lang, output_lang, 75000, train_pairs, MAX_LENGTH, print_every=5000)
+train_iters(device, encoder1, attn_decoder1, input_lang, output_lang, 60000, train_pairs, MAX_LENGTH, print_every=5000)
 
 evaluate_randomly(device, encoder1, attn_decoder1, input_lang, output_lang, test_pairs, MAX_LENGTH)
 evaluate_and_show_attention(device, encoder1, attn_decoder1, input_lang, output_lang, MAX_LENGTH, "the sum of the digits of a 2-digit number is 7. The tens digit is one less than 3 times the units digit. Find the number.")
