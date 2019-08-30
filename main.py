@@ -1,11 +1,13 @@
 import os
 import pandas as pd
 import torch
+
+from core.evaluation import evaluate_randomly, evaluate_and_show_attention
 from core.lang import Lang
 from core.string_utils import normalize_string
 from models.attention_decoder_rnn import AttentionDecoderRNN
 from models.encoder_rnn import EncoderRNN
-from core.training import train_iters, evaluate_randomly, evaluate_and_show_attention
+from core.training import train_iters
 
 
 dataset_folder = 'dataset/number_word_std'
@@ -44,4 +46,5 @@ attn_decoder1 = AttentionDecoderRNN(hidden_size, output_lang.n_words, dropout_p=
 train_iters(device, encoder1, attn_decoder1, input_lang, output_lang, 60000, train_pairs, MAX_LENGTH, print_every=5000)
 
 evaluate_randomly(device, encoder1, attn_decoder1, input_lang, output_lang, test_pairs, MAX_LENGTH)
-evaluate_and_show_attention(device, encoder1, attn_decoder1, input_lang, output_lang, MAX_LENGTH, "the sum of the digits of a 2-digit number is 7. The tens digit is one less than 3 times the units digit. Find the number.")
+evaluate_and_show_attention(device, encoder1, attn_decoder1, input_lang, output_lang, MAX_LENGTH,
+                            "the sum of the digits of a 2-digit number is 7. The tens digit is one less than 3 times the units digit. Find the number.")
