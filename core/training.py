@@ -42,7 +42,7 @@ def indexes_from_sentence(lang, sentence):
 
 def tensor_from_sentence(device, lang, sentence):
     indexes = indexes_from_sentence(lang, sentence)
-    indexes.append(EOS_token)
+    indexes.append(EOS_token[0])
     return torch.tensor(indexes, dtype=torch.long, device=device).view(-1, 1)
 
 
@@ -70,7 +70,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
             input_tensor[ei], encoder_hidden)
         encoder_outputs[ei] = encoder_output[0, 0]
 
-    decoder_input = torch.tensor([[SOS_token]], device=device)
+    decoder_input = torch.tensor([[SOS_token[0]]], device=device)
 
     decoder_hidden = encoder_hidden
 
@@ -93,7 +93,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
             decoder_input = topi.squeeze().detach()  # detach from history as input
 
             loss += criterion(decoder_output, target_tensor[di])
-            if decoder_input.item() == EOS_token:
+            if decoder_input.item() == EOS_token[0]:
                 break
 
     loss.backward()
@@ -152,7 +152,7 @@ def evaluate(device, encoder, decoder, input_lang, output_lang, sentence, max_le
                                                      encoder_hidden)
             encoder_outputs[ei] += encoder_output[0, 0]
 
-        decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
+        decoder_input = torch.tensor([[SOS_token[0]]], device=device)  # SOS
 
         decoder_hidden = encoder_hidden
 
@@ -164,8 +164,8 @@ def evaluate(device, encoder, decoder, input_lang, output_lang, sentence, max_le
                 decoder_input, decoder_hidden, encoder_outputs)
             decoder_attentions[di] = decoder_attention.data
             topv, topi = decoder_output.data.topk(1)
-            if topi.item() == EOS_token:
-                decoded_words.append('<EOS>')
+            if topi.item() == EOS_token[0]:
+                decoded_words.append(f'<{EOS_token[1]}>')
                 break
             else:
                 decoded_words.append(output_lang.index2word[topi.item()])
@@ -195,7 +195,7 @@ def show_attention(input_sentence, output_words, attentions):
 
     # Set up axes
     ax.set_xticklabels([''] + input_sentence.split(' ') +
-                       ['<EOS>'], rotation=90)
+                       [f'<{EOS_token[1]}>'], rotation=90)
     ax.set_yticklabels([''] + output_words)
 
     # Show label at every tick

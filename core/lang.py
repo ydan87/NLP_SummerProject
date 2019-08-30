@@ -1,5 +1,5 @@
-SOS_token = 0
-EOS_token = 1
+SOS_token = 0, 'SOS'
+EOS_token = 1, 'EOS'
 
 
 class Lang:
@@ -7,8 +7,12 @@ class Lang:
         self.name = name
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {SOS_token: "SOS", EOS_token: "EOS"}
-        self.n_words = 2  # CountSOS and EOS
+        self.index2word = {}
+
+        for idx, value in [SOS_token, EOS_token]:
+            self.index2word[idx] = value
+
+        self.n_words = len(self.index2word)  # Count SOS and EOS
 
     def add_sentence(self, sentence):
         for word in sentence.split(' '):

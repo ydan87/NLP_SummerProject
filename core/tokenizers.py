@@ -65,7 +65,7 @@ class SimpleTokenizer(Tokenizer):
         lang = self.input_lang if is_target is False else self.output_lang
 
         indices = [lang.word2index[word] for word in sample.split(' ')]
-        indices.append(EOS_token)
+        indices.append(EOS_token[0])
 
         return indices
 
