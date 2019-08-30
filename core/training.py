@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 
-teacher_forcing_ratio = 0.5
+_TEACHER_FORCING_RATIO = 0.5
 
 
 def show_plot(points):
@@ -74,7 +74,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
 
     decoder_hidden = encoder_hidden
 
-    use_teacher_forcing = random.random() < teacher_forcing_ratio
+    use_teacher_forcing = random.random() < _TEACHER_FORCING_RATIO
 
     if use_teacher_forcing:
         # Teacher forcing: Feed the target as the next input
