@@ -74,7 +74,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
 
     decoder_hidden = encoder_hidden
 
-    use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
+    use_teacher_forcing = random.random() < teacher_forcing_ratio
 
     if use_teacher_forcing:
         # Teacher forcing: Feed the target as the next input
