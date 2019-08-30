@@ -5,27 +5,12 @@ import random
 import torch
 import torch.nn as nn
 from torch import optim
+
 from core.lang import EOS_token, SOS_token
-
-import matplotlib.ticker as ticker
-
+from core.time_utils import time_since
 from core.visualizations import show_attention, show_plot
 
 _TEACHER_FORCING_RATIO = 0.5
-
-
-def as_minutes(s):
-    m = math.floor(s / 60)
-    s -= m * 60
-    return '%dm %ds' % (m, s)
-
-
-def time_since(since, percent):
-    now = time.time()
-    s = now - since
-    es = s / percent
-    rs = es - s
-    return '%s (- %s)' % (as_minutes(s), as_minutes(rs))
 
 
 def indexes_from_sentence(lang, sentence):
