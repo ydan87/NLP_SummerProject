@@ -5,7 +5,7 @@ from core.lang import Lang
 from core.string_utils import normalize_string
 from models.attention_decoder_rnn import AttentionDecoderRNN
 from models.encoder_rnn import EncoderRNN
-from baseline_model import train_iters, evaluate_randomly, evaluate_and_show_attention
+from core.training import train_iters, evaluate_randomly, evaluate_and_show_attention
 
 
 dataset_folder = 'dataset/number_word_std'
