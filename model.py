@@ -23,17 +23,27 @@ def run_model():
     tokenizer.setup(math_train, math_test)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Model hyper-parameters
     hidden_size = 256
+    dropout_p = 0.2
 
     encoder1 = EncoderRNN(tokenizer.input_lang.n_words, hidden_size).to(device)
-    attn_decoder1 = AttentionDecoderRNN(hidden_size, tokenizer.output_lang.n_words, dropout_p=0.2, max_length=tokenizer.max_length).to(device)
+    attn_decoder1 = AttentionDecoderRNN(hidden_size, tokenizer.output_lang.n_words,
+                                        dropout_p=dropout_p, max_length=tokenizer.max_length).to(device)
 
+    # Todo: return to real number of iterations and prints
     train_iters(device, encoder1, attn_decoder1, tokenizer.input_lang, tokenizer.output_lang, 1000,
                 tokenizer.train_pairs, tokenizer.max_length, print_every=200)
 
-    evaluate_randomly(device, encoder1, attn_decoder1, tokenizer.input_lang, tokenizer.output_lang, tokenizer.test_pairs, tokenizer.max_length)
-    evaluate_and_show_attention(device, encoder1, attn_decoder1, tokenizer.input_lang, tokenizer.output_lang, tokenizer.max_length,
-                                "the sum of the digits of a 2-digit number is 7. The tens digit is one less than 3 times the units digit. Find the number.")
+    evaluate_randomly(device, encoder1, attn_decoder1,
+                      tokenizer.input_lang, tokenizer.output_lang, tokenizer.test_pairs, tokenizer.max_length)
+
+    sample_question = "the sum of the digits of a 2-digit number is 7. The tens digit is one less than 3 times the " \
+                      "units digit. Find the number. "
+    evaluate_and_show_attention(device, encoder1, attn_decoder1,
+                                tokenizer.input_lang, tokenizer.output_lang, tokenizer.max_length,
+                                sample_question)
 
 
 class BaseTokenizer:
