@@ -1,4 +1,5 @@
 import unicodedata
+import re
 
 
 def unicode_to_ascii(s):
@@ -14,7 +15,7 @@ def normalize_string(s):
     s = unicode_to_ascii(s)
 
     # ensure each math symbol is it's own token
-    s = "".join([ c if c.isalnum() else " {} ".format(c) for c in s])
+    s = "".join([c if c.isalnum() else " {} ".format(c) for c in s])
 
     # remove the unknowns since tools like wolfram are good at identifying them
     s = s[s.index(';') + 1:]
@@ -25,12 +26,48 @@ def normalize_string(s):
     return s
 
 
+def remove_punctuation(s):
+    """ Removes all punctuation tokens from text"""
+    return re.subn(r"""[!.><:;',@#~{}\[\]\-_+=£$%^&()?]""", "", s, count=0, flags=0)[0]
+
+
+def generalize(text, equation):
+    """ Replaces all numeric values with general variables """
+    word_var_mapping = dict()
+    var_idx = 1
+
+    words = []
+    for s in text.split(' '):
+        if s.isdigit():
+            var = f'var{var_idx}'
+            words.append(var)
+            word_var_mapping[s] = var
+
+            var_idx += 1
+        else:
+            words.append(s)
+
+    general_text = ' '.join(words)
+
+    words = []
+    for s in equation.split(' '):
+        if s in word_var_mapping:
+            words.append(word_var_mapping[s])
+        else:
+            words.append(s)
+
+    general_equation = ' '.join(words)
+
+    return general_text, general_equation
+
+
 def text2int(textnum, numwords={}):
+    """  Replaces all numbers that are written as words with their numeric representation """
     if not numwords:
         units = [
-        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
-        "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
-        "sixteen", "seventeen", "eighteen", "nineteen",
+            "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+            "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+            "sixteen", "seventeen", "eighteen", "nineteen",
         ]
 
         tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
@@ -42,7 +79,7 @@ def text2int(textnum, numwords={}):
         for idx, word in enumerate(tens):       numwords[word] = (1, idx * 10)
         for idx, word in enumerate(scales): numwords[word] = (10 ** (idx * 3 or 2), 0)
 
-    ordinal_words = {'first':1, 'second':2, 'third':3, 'fifth':5, 'eighth':8, 'ninth':9, 'twelfth':12}
+    ordinal_words = {'first': 1, 'second': 2, 'third': 3, 'fifth': 5, 'eighth': 8, 'ninth': 9, 'twelfth': 12}
     ordinal_endings = [('ieth', 'y'), ('th', '')]
 
     textnum = textnum.replace('-', ' ')
@@ -82,4 +119,3 @@ def text2int(textnum, numwords={}):
         curstring += repr(result + current)
 
     return curstring
-

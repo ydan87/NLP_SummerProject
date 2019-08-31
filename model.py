@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 
 from core.evaluation import evaluate_randomly, evaluate_and_show_attention
-from core.string_utils import normalize_string
+from core.string_utils import normalize_string, text2int, remove_punctuation, generalize
 from core.tensor_utils import DEVICE
 from core.tokenizers import Tokenizer
 from models.attention_decoder_rnn import AttentionDecoderRNN
@@ -51,8 +51,7 @@ def run_model(clean_func):
     evaluate_randomly(encoder1, attn_decoder1,
                       input_tokenizer, output_tokenizer, test_pairs, max_length)
 
-    sample_question = "the sum of the digits of a 2-digit number is 7. The tens digit is one less than 3 times the " \
-                      "units digit. Find the number. "
+    sample_question = math_test.sample(1).iloc[0]['text']
     evaluate_and_show_attention(encoder1, attn_decoder1,
                                 input_tokenizer, output_tokenizer, max_length,
                                 sample_question)
@@ -60,11 +59,38 @@ def run_model(clean_func):
 
 def run_baseline_model():
     def clean(data):
-        data.equations = data.equations.apply(lambda x: '; '.join(x))
-        data.equations = data.equations.apply(lambda x: normalize_string(x))
+        clean_equations = lambda s: normalize_string('; '.join(s))
+        data.equations = data.equations.apply(clean_equations)
+
+    run_model(clean)
+
+
+def run_text_to_numbers_model():
+    def clean(data):
+        clean_text = lambda s: text2int(remove_punctuation(s))
+        data.text = data.text.apply(clean_text)
+
+        clean_equations = lambda s: normalize_string('; '.join(s))
+        data.equations = data.equations.apply(clean_equations)
+
+    run_model(clean)
+
+
+def run_generalized_text_model():
+    def clean(data):
+        clean_text = lambda s: text2int(remove_punctuation(s))
+        data.text = data.text.apply(clean_text)
+
+        clean_equations = lambda s: normalize_string('; '.join(s))
+        data.equations = data.equations.apply(clean_equations)
+
+        data[['text', 'equations']] = data[['text', 'equations']].apply(
+            lambda x: generalize(x['text'], x['equations']), axis=1, result_type='expand')
 
     run_model(clean)
 
 
 if __name__ == '__main__':
-    run_baseline_model()
+    # run_baseline_model()
+    # run_text_to_numbers_model()
+    run_generalized_text_model()
