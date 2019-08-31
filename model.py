@@ -44,9 +44,8 @@ def run_model(clean_func):
     attn_decoder1 = AttentionDecoderRNN(hidden_size, output_tokenizer.lang.n_words,
                                         dropout_p=dropout_p, max_length=max_length).to(DEVICE)
 
-    # Todo: return to real number of iterations and prints
-    train_iters(encoder1, attn_decoder1, input_tokenizer, output_tokenizer, 1000,
-                train_pairs, max_length, print_every=200)
+    train_iters(encoder1, attn_decoder1, input_tokenizer, output_tokenizer, 75000,
+                train_pairs, max_length, print_every=5000)
 
     evaluate_randomly(encoder1, attn_decoder1,
                       input_tokenizer, output_tokenizer, test_pairs, max_length)
