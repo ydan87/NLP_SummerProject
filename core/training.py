@@ -6,14 +6,14 @@ import torch.nn as nn
 from torch import optim
 
 from core.lang import EOS_token, SOS_token
-from core.tensor_utils import tensors_from_pair
+from core.tensor_utils import tensors_from_pair, DEVICE
 from core.time_utils import time_since
 from core.visualizations import show_plot
 
 _TEACHER_FORCING_RATIO = 0.5
 
 
-def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length):
+def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length):
     encoder_hidden = encoder.init_hidden()
 
     encoder_optimizer.zero_grad()
@@ -22,7 +22,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
     input_length = input_tensor.size(0)
     target_length = target_tensor.size(0)
 
-    encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=device)
+    encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=DEVICE)
 
     loss = 0
 
@@ -31,7 +31,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
             input_tensor[ei], encoder_hidden)
         encoder_outputs[ei] = encoder_output[0, 0]
 
-    decoder_input = torch.tensor([[SOS_token[0]]], device=device)
+    decoder_input = torch.tensor([[SOS_token[0]]], device=DEVICE)
 
     decoder_hidden = encoder_hidden
 
@@ -65,7 +65,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
     return loss.item() / target_length
 
 
-def train_iters(device, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
+def train_iters(encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
@@ -73,7 +73,7 @@ def train_iters(device, encoder, decoder, input_tokenizer, output_tokenizer, n_i
 
     encoder_optimizer = optim.Adam(encoder.parameters())  # , lr=learning_rate)
     decoder_optimizer = optim.Adam(decoder.parameters())  # , lr=learning_rate)
-    training_pairs = [tensors_from_pair(device, input_tokenizer, output_tokenizer, random.choice(train_pairs))
+    training_pairs = [tensors_from_pair(input_tokenizer, output_tokenizer, random.choice(train_pairs))
                       for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
@@ -82,7 +82,7 @@ def train_iters(device, encoder, decoder, input_tokenizer, output_tokenizer, n_i
         input_tensor = training_pair[0]
         target_tensor = training_pair[1]
 
-        loss = train(device, input_tensor, target_tensor, encoder,
+        loss = train(input_tensor, target_tensor, encoder,
                      decoder, encoder_optimizer, decoder_optimizer, criterion, max_len)
         print_loss_total += loss
         plot_loss_total += loss
