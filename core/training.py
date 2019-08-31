@@ -65,7 +65,7 @@ def train(device, input_tensor, target_tensor, encoder, decoder, encoder_optimiz
     return loss.item() / target_length
 
 
-def train_iters(device, encoder, decoder, input_lang, output_lang, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
+def train_iters(device, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every
@@ -73,7 +73,8 @@ def train_iters(device, encoder, decoder, input_lang, output_lang, n_iters, trai
 
     encoder_optimizer = optim.Adam(encoder.parameters())  # , lr=learning_rate)
     decoder_optimizer = optim.Adam(decoder.parameters())  # , lr=learning_rate)
-    training_pairs = [tensors_from_pair(device, input_lang, output_lang, random.choice(train_pairs)) for i in range(n_iters)]
+    training_pairs = [tensors_from_pair(device, input_tokenizer, output_tokenizer, random.choice(train_pairs))
+                      for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
     for iter in range(1, n_iters + 1):

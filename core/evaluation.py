@@ -6,9 +6,9 @@ from core.tensor_utils import tensor_from_sentence
 from core.visualizations import show_attention
 
 
-def evaluate(device, encoder, decoder, input_lang, output_lang, sentence, max_length):
+def evaluate(device, encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_length):
     with torch.no_grad():
-        input_tensor = tensor_from_sentence(device, input_lang, sentence)
+        input_tensor = tensor_from_sentence(device, input_tokenizer, sentence)
         input_length = input_tensor.size()[0]
         encoder_hidden = encoder.init_hidden()
 
@@ -35,26 +35,27 @@ def evaluate(device, encoder, decoder, input_lang, output_lang, sentence, max_le
                 decoded_words.append(f'<{EOS_token[1]}>')
                 break
             else:
-                decoded_words.append(output_lang.index2word[topi.item()])
+                decoded_words.append(output_tokenizer.untokenize(topi.item()))
 
             decoder_input = topi.squeeze().detach()
 
         return decoded_words, decoder_attentions[:di + 1]
 
 
-def evaluate_randomly(device, encoder, decoder, input_lang, output_lang, test_pairs, max_len, n=10):
+def evaluate_randomly(device, encoder, decoder, input_tokenizer, output_tokenizer, test_pairs, max_len, n=10):
     for i in range(n):
         pair = random.choice(test_pairs)
         print('>', pair[0])
         print('=', pair[1])
-        output_words, attentions = evaluate(device, encoder, decoder, input_lang, output_lang, pair[0], max_len)
+        output_words, attentions = evaluate(device, encoder, decoder, input_tokenizer, output_tokenizer, pair[0], max_len)
         output_sentence = ' '.join(output_words)
         print('<', output_sentence)
         print('')
 
 
-def evaluate_and_show_attention(device, encoder, decoder, input_lang, output_lang, max_len, input_sentence):
-    output_words, attentions = evaluate(device, encoder, decoder, input_lang, output_lang, input_sentence, max_len)
+def evaluate_and_show_attention(device, encoder, decoder, input_tokenizer, output_tokenizer, max_len, input_sentence):
+    output_words, attentions = \
+        evaluate(device, encoder, decoder, input_tokenizer, output_tokenizer, input_sentence, max_len)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
     print(len(output_words))
