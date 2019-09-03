@@ -1,2 +1,4 @@
-# NLP Summer Project
-This repository is dedicated to Maya and Daniel's final project in NLP course, spring 2019!
+# NLP Summer Project, IDC 2019
+This repository is for our final project in NLP course, IDC, spring 2019.
+
+Maya Gilad and Daniel Yacouboff
