@@ -26,6 +26,7 @@ def evaluate(encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_
         decoded_words = []
         decoder_attentions = torch.zeros(max_length, max_length)
 
+        di = 0
         for di in range(max_length):
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs)
@@ -53,10 +54,9 @@ def evaluate_randomly(encoder, decoder, input_tokenizer, output_tokenizer, test_
         print('')
 
 
-def evaluate_and_show_attention(encoder, decoder, input_tokenizer, output_tokenizer, max_len, input_sentence):
-    output_words, attentions = \
-        evaluate(encoder, decoder, input_tokenizer, output_tokenizer, input_sentence, max_len)
+def evaluate_and_show_attention(approach, encoder, decoder, input_tokenizer, output_tokenizer, max_len, input_sentence):
+    output_words, attentions = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, input_sentence, max_len)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
     print(len(output_words))
-    show_attention(input_sentence, output_words, attentions)
+    show_attention(approach, input_sentence, output_words, attentions)

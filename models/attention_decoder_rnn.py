@@ -18,8 +18,8 @@ class AttentionDecoderRNN(nn.Module):
         self.gru = nn.GRU(self.hidden_size, self.hidden_size)
         self.out = nn.Linear(self.hidden_size, self.output_size)
 
-    def forward(self, input, hidden, encoder_outputs):
-        embedded = self.embedding(input).view(1, 1, -1)
+    def forward(self, input_l, hidden, encoder_outputs):
+        embedded = self.embedding(input_l).view(1, 1, -1)
         embedded = self.dropout(embedded)
 
         attn_weights = F.softmax(self.attn(torch.cat((embedded[0], hidden[0]), 1)), dim=1)
