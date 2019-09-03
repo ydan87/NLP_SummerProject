@@ -7,6 +7,7 @@ NUMBER_WORD_STD = 0
 
 
 def get_number_word_std(data_type):
+    """ Gets the right dataset according to data type (dev\test) """
     dataset_folder = 'dataset/number_word_std'
 
     t = 'test' if data_type == TEST else 'dev'
@@ -18,6 +19,7 @@ def get_number_word_std(data_type):
 
 
 def get(dataset_type, data_type, num_samples=None):
+    """ Fetches the data set """
     if dataset_type == NUMBER_WORD_STD:
         data = get_number_word_std(data_type)
     else:

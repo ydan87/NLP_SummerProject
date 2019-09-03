@@ -2,6 +2,7 @@ from core.lang import Lang
 
 
 class Tokenizer:
+    """ Used to tokenize a vocabulary """
     def __init__(self, name):
         self.name = name
         self.num_words = 0

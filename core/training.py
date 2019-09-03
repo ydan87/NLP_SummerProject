@@ -14,6 +14,8 @@ _TEACHER_FORCING_RATIO = 0.5
 
 
 def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length):
+    """ training procedure """
+    # Performs one iteration of training gets the current loss
     encoder_hidden = encoder.init_hidden()
 
     encoder_optimizer.zero_grad()
@@ -62,6 +64,7 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, deco
 
 
 def train_iters(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
+    # Training iterations
     start = time.time()
     plot_losses = []
     print_loss_total = 0  # Reset every print_every

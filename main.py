@@ -39,12 +39,16 @@ def run_model(clean_func, approach):
     hidden_size = 256
     dropout_p = 0.2
 
+    # Our network components - Encoder RNN and Attention decoder RNN
     encoder1 = EncoderRNN(input_tokenizer.lang.n_words, hidden_size).to(DEVICE)
     attn_decoder1 = AttentionDecoderRNN(hidden_size, output_tokenizer.lang.n_words, dropout_p=dropout_p, max_length=max_length).to(DEVICE)
 
+    # Run training for n_iters times (we chose 60000 after several trials)
     train_iters(approach, encoder1, attn_decoder1, input_tokenizer, output_tokenizer, 60000, train_pairs, max_length, print_every=5000)
 
+    # Randomly takes problems from the test set and evaluates them
     evaluate_randomly(encoder1, attn_decoder1, input_tokenizer, output_tokenizer, test_pairs, max_length)
+    # Another evaluation
     sample_question = math_test.sample(1).iloc[0]['text']
     evaluate_and_show_attention(approach, encoder1, attn_decoder1, input_tokenizer, output_tokenizer, max_length, sample_question)
 

@@ -7,6 +7,7 @@ from core.visualizations import show_attention
 
 
 def evaluate(encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_length):
+    """ Evalutation """
     with torch.no_grad():
         input_tensor = tensor_from_sentence(input_tokenizer, sentence)
         input_length = input_tensor.size()[0]
@@ -44,6 +45,7 @@ def evaluate(encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_
 
 
 def evaluate_randomly(encoder, decoder, input_tokenizer, output_tokenizer, test_pairs, max_len, n=10):
+    """ Randomized n questions from the test set and evaluates each of them """
     for i in range(n):
         pair = random.choice(test_pairs)
         print('>', pair[0])
@@ -55,6 +57,7 @@ def evaluate_randomly(encoder, decoder, input_tokenizer, output_tokenizer, test_
 
 
 def evaluate_and_show_attention(approach, encoder, decoder, input_tokenizer, output_tokenizer, max_len, input_sentence):
+    """ Given a sample question, evaluates it and plot the attention of each parts """
     output_words, attentions = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, input_sentence, max_len)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))

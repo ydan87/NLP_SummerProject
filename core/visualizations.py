@@ -5,6 +5,7 @@ from core.lang import EOS_token
 
 
 def show_attention(approach, input_sentence, output_words, attentions):
+    """ Used to plot the attention """
     # Set up figure with color bar
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -25,6 +26,7 @@ def show_attention(approach, input_sentence, output_words, attentions):
 
 
 def show_plot(approach, points):
+    """ Given approach and points set, plot the points and add the approach to the filename """
     plt.figure()
     fig, ax = plt.subplots()
     # this locator puts ticks at regular intervals
