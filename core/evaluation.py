@@ -1,13 +1,64 @@
+from collections import Counter
+
 import torch
 import random
+import numpy as np
 
 from core.lang import EOS_token, SOS_token
 from core.tensor_utils import tensor_from_sentence, DEVICE
 from core.visualizations import show_attention
 
+EQUATION_LEVEL_ACC, QUESTION_LEVEL_ACC, EQUATION_STRUCTURE_LEVEL_ACC, QUESTION_STRUCTURE_LEVEL_ACC = range(4)
 
-def evaluate(encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_length):
-    """ Evalutation """
+
+def accuracy(y_true, y_pred):
+    metrics = Counter()
+
+    num_questions = len(y_true)
+    num_equations = np.sum(len(q_equations) for q_equations in y_true)
+
+    for true_equations, pred_equations in zip(y_true, y_pred):
+        true_equations = true_equations.split(';')
+        pred_equations = pred_equations.split(';')
+
+        is_question_level_accurate = True
+        for t_equ, p_equ in zip(true_equations, pred_equations):
+            t_words = t_equ.split(' ')
+            p_words = p_equ.split(' ')
+
+            is_equation_level_accurate = True
+            is_equation_structure_level_accurate = True
+            for i, word in enumerate(t_words):
+                if i >= len(p_words):
+                    is_equation_level_accurate = False
+                    is_equation_structure_level_accurate = False
+                elif word != p_words[i]:
+                    is_equation_level_accurate = False
+                elif not (word.startswith('var') and p_equ[i].startswith('var')):
+                    is_equation_structure_level_accurate = False
+
+            if is_equation_structure_level_accurate:
+                metrics[EQUATION_STRUCTURE_LEVEL_ACC] += 1
+
+            if is_equation_level_accurate:
+                metrics[EQUATION_LEVEL_ACC] += 1
+            else:
+                is_question_level_accurate = False
+
+        if is_question_level_accurate:
+            if len(true_equations) == len(pred_equations):
+                metrics[QUESTION_LEVEL_ACC] += 1
+
+    acc = dict()
+    acc['question_level'] = metrics[QUESTION_LEVEL_ACC] / num_questions
+    acc['equation_level'] = metrics[EQUATION_LEVEL_ACC] / num_equations
+    acc['equation_structure_level'] = metrics[EQUATION_STRUCTURE_LEVEL_ACC] / num_equations
+
+    return acc
+
+
+def evaluate_sample(encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_length):
+    """ Evaluation """
     with torch.no_grad():
         input_tensor = tensor_from_sentence(input_tokenizer, sentence)
         input_length = input_tensor.size()[0]
@@ -34,7 +85,6 @@ def evaluate(encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_
             decoder_attentions[di] = decoder_attention.data
             topv, topi = decoder_output.data.topk(1)
             if topi.item() == EOS_token[0]:
-                decoded_words.append(f'<{EOS_token[1]}>')
                 break
             else:
                 decoded_words.append(output_tokenizer.untokenize(topi.item()))
@@ -44,21 +94,34 @@ def evaluate(encoder, decoder, input_tokenizer, output_tokenizer, sentence, max_
         return decoded_words, decoder_attentions[:di + 1]
 
 
-def evaluate_randomly(encoder, decoder, input_tokenizer, output_tokenizer, test_pairs, max_len, n=10):
+def evaluate(encoder, decoder, input_tokenizer, output_tokenizer, test_pairs, max_len, n=None, verbose=False):
     """ Randomized n questions from the test set and evaluates each of them """
-    for i in range(n):
-        pair = random.choice(test_pairs)
-        print('>', pair[0])
-        print('=', pair[1])
-        output_words, attentions = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, pair[0], max_len)
+    y_true = []
+    y_pred = []
+
+    if n is not None:
+        data = [random.choice(test_pairs) for i in range(n)]
+    else:
+        data = test_pairs
+
+    for question, equation in data:
+        y_true.append(equation)
+        output_words, attentions = evaluate_sample(encoder, decoder, input_tokenizer, output_tokenizer, question, max_len)
         output_sentence = ' '.join(output_words)
-        print('<', output_sentence)
-        print('')
+        y_pred.append(output_sentence)
+
+        if verbose:
+            print('>', question)
+            print('=', equation)
+            print('<', output_sentence)
+            print('')
+
+    return accuracy(y_true, y_pred)
 
 
 def evaluate_and_show_attention(approach, encoder, decoder, input_tokenizer, output_tokenizer, max_len, input_sentence):
     """ Given a sample question, evaluates it and plot the attention of each parts """
-    output_words, attentions = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, input_sentence, max_len)
+    output_words, attentions = evaluate_sample(encoder, decoder, input_tokenizer, output_tokenizer, input_sentence, max_len)
     print('input =', input_sentence)
     print('output =', ' '.join(output_words))
     print(len(output_words))

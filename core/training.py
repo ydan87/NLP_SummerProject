@@ -1,19 +1,23 @@
 from __future__ import unicode_literals, print_function, division
 import time
 import random
+from collections import defaultdict
+
 import torch
 import torch.nn as nn
 from torch import optim
+import numpy as np
 
+from core.evaluation import evaluate
 from core.lang import EOS_token, SOS_token
 from core.tensor_utils import tensors_from_pair, DEVICE
 from core.time_utils import time_since
-from core.visualizations import show_plot
+from core.visualizations import show_loss, show_accuracy
 
 _TEACHER_FORCING_RATIO = 0.5
 
 
-def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length):
+def train_sample(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_length):
     """ training procedure """
     # Performs one iteration of training gets the current loss
     encoder_hidden = encoder.init_hidden()
@@ -63,7 +67,7 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, deco
     return loss.item() / target_length
 
 
-def train_iters(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
+def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
     # Training iterations
     start = time.time()
     plot_losses = []
@@ -76,24 +80,27 @@ def train_iters(approach, encoder, decoder, input_tokenizer, output_tokenizer, n
                       for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
+    losses = []
+    train_accuracy = defaultdict(list)
     for itr in range(1, n_iters + 1):
         training_pair = training_pairs[itr - 1]
         input_tensor = training_pair[0]
         target_tensor = training_pair[1]
 
-        loss = train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_len)
-        print_loss_total += loss
-        plot_loss_total += loss
+        loss = train_sample(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_len)
+        losses.append(loss)
 
         if itr % print_every == 0:
-            print_loss_avg = print_loss_total / print_every
-            print_loss_total = 0
-            print('%s (%d %d%%) %.4f' % (time_since(start, itr / n_iters),
-                                         itr, itr / n_iters * 100, print_loss_avg))
+            avg_loss = np.mean(losses)
+            plot_losses.append(avg_loss)
+            print('%s (%d %d%%) %.4f' % (time_since(start, itr / n_iters), itr, itr / n_iters * 100, avg_loss))
 
-        if itr % plot_every == 0:
-            plot_loss_avg = plot_loss_total / plot_every
-            plot_losses.append(plot_loss_avg)
-            plot_loss_total = 0
+            accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, train_pairs, max_len)
 
-    show_plot(approach, plot_losses)
+            for key, value in accuracy.items():
+                train_accuracy[key].append(value)
+
+            losses = []
+
+    show_loss(approach, plot_losses)
+    show_accuracy(approach, train_accuracy)
