@@ -15,26 +15,40 @@ def accuracy(y_true, y_pred):
     metrics = Counter()
 
     num_questions = len(y_true)
-    num_equations = np.sum(len(q_equations) for q_equations in y_true)
+    num_equations = 0
 
     for true_equations, pred_equations in zip(y_true, y_pred):
-        true_equations = true_equations.split(';')
-        pred_equations = pred_equations.split(';')
+        prepare_equ = lambda x: [equ.strip() for equ in x.split(';')]
+        true_equations = prepare_equ(true_equations)
+        num_equations += len(true_equations)
+
+        pred_equations = prepare_equ(pred_equations)
 
         is_question_level_accurate = True
         for t_equ, p_equ in zip(true_equations, pred_equations):
             t_words = t_equ.split(' ')
             p_words = p_equ.split(' ')
 
-            is_equation_level_accurate = True
-            is_equation_structure_level_accurate = True
-            for i, word in enumerate(t_words):
-                if i >= len(p_words):
-                    is_equation_level_accurate = False
+            is_equation_level_accurate = len(p_words) == len(p_words)
+            is_equation_structure_level_accurate = is_equation_level_accurate
+
+            for t_word, p_word in zip(t_words, p_words):
+                if not is_equation_structure_level_accurate:
+                    break
+
+                if t_word == p_word:
+                    continue
+
+                is_equation_level_accurate = False
+
+                if t_word.startswith('var') and p_word.startswith('var'):
                     is_equation_structure_level_accurate = False
-                elif word != p_words[i]:
-                    is_equation_level_accurate = False
-                elif not (word.startswith('var') and p_equ[i].startswith('var')):
+                elif t_word.isdigit():
+                    try:
+                        assert eval(t_word) == eval(p_word)
+                    except:
+                        is_equation_structure_level_accurate = False
+                elif t_word.isalnum() and p_word.isalnum():
                     is_equation_structure_level_accurate = False
 
             if is_equation_structure_level_accurate:
