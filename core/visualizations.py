@@ -22,7 +22,7 @@ def show_attention(approach, input_sentence, output_words, attentions):
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
 
     plt.show()
-    plt.savefig('results/' + approach + '_attention.png')
+    fig.savefig(f'results/{approach}_attention.png')
 
 
 def show_loss(approach, iterations, losses):
