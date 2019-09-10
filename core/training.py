@@ -67,7 +67,7 @@ def train_sample(input_tensor, target_tensor, encoder, decoder, encoder_optimize
     return loss.item() / target_length
 
 
-def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, log_every=1000):
+def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, test_pairs, max_len, log_every=1000):
     # Training iterations
     start = time.time()
     plot_losses = []
@@ -82,7 +82,8 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
 
     iterations = []
     losses = []
-    train_accuracy = defaultdict(list)
+    train_accuracies = defaultdict(list)
+    test_accuracies = defaultdict(list)
     for idx in range(0, n_iters):
         input_tensor, target_tensor = training_pairs[idx]
 
@@ -99,12 +100,18 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
                 (idx+1) / n_iters * 100,
                 avg_loss))
 
-            accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, train_pairs, max_len)
+            train_accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, train_pairs, max_len)
 
-            for key, value in accuracy.items():
-                train_accuracy[key].append(value)
+            for key, value in train_accuracy.items():
+                train_accuracies[key].append(value)
+
+            test_accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, test_pairs, max_len)
+
+            for key, value in test_accuracy.items():
+                test_accuracies[key].append(value)
 
             losses = []
 
     show_loss(approach, iterations, plot_losses)
-    show_accuracy(approach, iterations, train_accuracy)
+    show_accuracy(approach, iterations, train_accuracies)
+    show_accuracy(approach, iterations, test_accuracies, is_train=False)

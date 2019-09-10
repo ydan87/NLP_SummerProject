@@ -44,15 +44,7 @@ def run_model(clean_func, approach):
     attn_decoder1 = AttentionDecoderRNN(hidden_size, output_tokenizer.lang.n_words, dropout_p=dropout_p, max_length=max_length).to(DEVICE)
 
     # Run training for n_iters times (we chose 60000 after several trials)
-    train(approach, encoder1, attn_decoder1, input_tokenizer, output_tokenizer, 1000, train_pairs, max_length, log_every=200)
-
-    # Randomly takes problems from the test set and evaluates them
-    test_accuracy = \
-        evaluate(encoder1, attn_decoder1, input_tokenizer, output_tokenizer, test_pairs, max_length, n=10, verbose=True)
-
-    print('Test accuracy')
-    for key, value in test_accuracy.items():
-        print(f'{key}: {value}')
+    train(approach, encoder1, attn_decoder1, input_tokenizer, output_tokenizer, 1000, train_pairs, test_pairs, max_length, log_every=200)
 
     # Another evaluation
     sample_question = math_test.sample(1).iloc[0]['text']
