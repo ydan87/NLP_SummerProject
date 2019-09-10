@@ -38,16 +38,15 @@ def show_loss(approach, iterations, losses):
 
 
 def show_accuracy(approach, iterations, accuracies, is_train=True):
-    plt.figure()
-    fig, ax = plt.subplots()
+    fig = plt.figure()
 
-    ax.set_xlabel(f'Number of iterations')
-    ax.set_ylabel('Accuracy (%)')
-    ax.set_title(f'{approach.upper()} - Accuracy value over time')
+    plt.xlabel = f'Number of iterations'
+    plt.ylabel = 'Accuracy (%)'
+    plt.title(f'{approach.upper()} - Accuracy value over time')
 
     for key, values in accuracies.items():
         plt.plot(iterations, values, label=key)
     plt.legend(loc='best')
     plt.show()
     type = 'train' if is_train else 'test'
-    plt.savefig(f'results/{approach}_{type}_accuracy_plot.png')
+    fig.savefig(f'results/{approach}_{type}_accuracy_plot.png')
