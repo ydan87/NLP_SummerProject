@@ -6,15 +6,16 @@ from core.lang import EOS_token
 
 def show_attention(approach, input_sentence, output_words, attentions):
     """ Used to plot the attention """
+    words = [''] + input_sentence.split(' ') + [f'<{EOS_token[1]}>']
+
     # Set up figure with color bar
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    cax = ax.matshow(attentions.numpy(), cmap='bone')
+    cax = ax.matshow(attentions.numpy()[:, :len(words)], cmap='bone')
     fig.colorbar(cax)
 
     # Set up axes
-    ax.set_xticklabels([''] + input_sentence.split(' ') +
-                       [f'<{EOS_token[1]}>'], rotation=90)
+    ax.set_xticklabels(words, rotation=90)
     ax.set_yticklabels([''] + output_words)
 
     # Show label at every tick
