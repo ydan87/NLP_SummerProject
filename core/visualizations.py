@@ -25,29 +25,30 @@ def show_attention(approach, input_sentence, output_words, attentions):
     plt.savefig('results/' + approach + '_attention.png')
 
 
-def show_loss(approach, losses):
+def show_loss(approach, iterations, losses):
     """ Given approach and points set, plot the points and add the approach to the filename """
     plt.figure()
     fig, ax = plt.subplots()
 
-    ax.set_xlabel('Number of iterations (in 10k)')
+    ax.set_xlabel('Number of iterations')
     ax.set_ylabel('Loss')
     ax.set_title(f'Loss value over time ({approach})')
-    plt.plot(losses)
+    plt.plot(iterations, losses)
+
     plt.show()
     plt.savefig(f'results/{approach}_loss_plot.png')
 
 
-def show_accuracy(approach, accuracies, is_train=True):
+def show_accuracy(approach, iterations, accuracies, is_train=True):
     plt.figure()
     fig, ax = plt.subplots()
 
-    ax.set_xlabel('Number of iterations (in 10k)')
+    ax.set_xlabel(f'Number of iterations')
     ax.set_ylabel('Accuracy (%)')
     ax.set_title(f'Accuracy value over time ({approach})')
 
     for key, values in accuracies.items():
-        plt.plot(values, label=key)
+        plt.plot(iterations, values, label=key)
     plt.legend(loc='best')
     plt.show()
     type = 'train' if is_train else 'test'

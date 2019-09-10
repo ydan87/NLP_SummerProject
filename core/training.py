@@ -67,7 +67,7 @@ def train_sample(input_tensor, target_tensor, encoder, decoder, encoder_optimize
     return loss.item() / target_length
 
 
-def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, print_every=1000, plot_every=100):
+def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, max_len, log_every=1000):
     # Training iterations
     start = time.time()
     plot_losses = []
@@ -80,20 +80,24 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
                       for i in range(n_iters)]
     criterion = nn.NLLLoss()
 
+    iterations = []
     losses = []
     train_accuracy = defaultdict(list)
-    for itr in range(1, n_iters + 1):
-        training_pair = training_pairs[itr - 1]
-        input_tensor = training_pair[0]
-        target_tensor = training_pair[1]
+    for idx in range(0, n_iters):
+        input_tensor, target_tensor = training_pairs[idx]
 
         loss = train_sample(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, decoder_optimizer, criterion, max_len)
         losses.append(loss)
 
-        if itr % print_every == 0:
+        if (idx % log_every == 0) or (idx == n_iters - 1):
+            iterations.append(idx + 1)
             avg_loss = np.mean(losses)
             plot_losses.append(avg_loss)
-            print('%s (%d %d%%) %.4f' % (time_since(start, itr / n_iters), itr, itr / n_iters * 100, avg_loss))
+            print('%s (%d %d%%) %.4f' % (
+                time_since(start, (idx+1) / n_iters),
+                idx+1,
+                (idx+1) / n_iters * 100,
+                avg_loss))
 
             accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, train_pairs, max_len)
 
@@ -102,5 +106,5 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
 
             losses = []
 
-    show_loss(approach, plot_losses)
-    show_accuracy(approach, train_accuracy)
+    show_loss(approach, iterations, plot_losses)
+    show_accuracy(approach, iterations, train_accuracy)
