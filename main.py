@@ -56,6 +56,8 @@ def run_model(clean_func, approach):
 def run_baseline_model():
     # baseline approach: provided as the "DataHack" challenge
     def clean(data):
+        data.text = data.text.apply(str.lower)
+
         clean_equations = lambda s: normalize_string('; '.join(s))
         data.equations = data.equations.apply(clean_equations)
 
@@ -66,20 +68,20 @@ def run_text_to_numbers_model():
     # "text to numbers" approach: remove any punctuation from the text as well as transforming
     # any number-in-word to an integer (e.g. "one apple" to "1 apple", "two bananas" to "2 bananas")
     def clean(data):
-        clean_text = lambda s: text2int(remove_punctuation(s))
+        clean_text = lambda s: text2int(remove_punctuation(s.lower()))
         data.text = data.text.apply(clean_text)
 
         clean_equations = lambda s: normalize_string('; '.join(s))
         data.equations = data.equations.apply(clean_equations)
 
-    run_model(clean, 'text2int')
+    run_model(clean, 'text2number')
 
 
 def run_generalized_text_model():
     # generalized approach: as text-to-numbers, but also generalizes the questions.
     # That is, if a question start with "Mike has 3 toys...", change it to "Mike has var1 toys".
     def clean(data):
-        clean_text = lambda s: text2int(remove_punctuation(s))
+        clean_text = lambda s: text2int(remove_punctuation(s.lower()))
         data.text = data.text.apply(clean_text)
 
         clean_equations = lambda s: normalize_string('; '.join(s))
