@@ -1,8 +1,9 @@
+import argparse
 import os
 import pandas as pd
 import torch
 
-from core.evaluation import evaluate, evaluate_and_show_attention
+from core.evaluation import evaluate_and_show_attention
 from core.string_utils import normalize_string, text2int, remove_punctuation, generalize
 from core.tensor_utils import DEVICE
 from core.tokenizers import Tokenizer
@@ -25,7 +26,8 @@ def run_model(clean_func, approach):
     clean_func(math_train)
     clean_func(math_test)
 
-    max_length = 1 + max(math_train.text.apply(lambda x: len(x.split(' '))).max(), math_test.text.apply(lambda x: len(x.split(' '))).max())
+    max_length = 1 + max(math_train.text.apply(lambda x: len(x.split(' '))).max(),
+                         math_test.text.apply(lambda x: len(x.split(' '))).max())
 
     all_data = pd.concat([math_train, math_test])
 
@@ -92,6 +94,16 @@ def run_generalized_text_model():
 if __name__ == '__main__':
     # We have tried several approaches in pre-processing that data before moving to the training phase.
     # The approaches are described across this file as well as in the report
-    #    run_baseline_model()
-    #    run_text_to_numbers_model()
-    run_generalized_text_model()
+    type_mapping = {
+        'baseline': run_baseline_model,
+        'text2numbers': run_text_to_numbers_model,
+        'generalized': run_generalized_text_model
+    }
+
+    parser = argparse.ArgumentParser(description='Train Math Word Problems')
+    parser.add_argument('type', choices=type_mapping.keys(),
+                        help='type of model to use in training')
+
+    args = parser.parse_args()
+
+    type_mapping[args.type]()
