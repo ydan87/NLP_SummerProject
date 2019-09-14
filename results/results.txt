@@ -1,4 +1,0 @@
-Final loss values:
-text to integers - 0.1828
-generalized - 0.1806
-baseline - 0.1609
