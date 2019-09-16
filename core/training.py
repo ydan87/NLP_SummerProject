@@ -70,9 +70,6 @@ def train_sample(input_tensor, target_tensor, encoder, decoder, encoder_optimize
 def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters, train_pairs, test_pairs, max_len, log_every=1000):
     # Training iterations
     start = time.time()
-    plot_losses = []
-    print_loss_total = 0  # Reset every print_every
-    plot_loss_total = 0  # Reset every plot_every
 
     encoder_optimizer = optim.Adam(encoder.parameters())  # , lr=learning_rate)
     decoder_optimizer = optim.Adam(decoder.parameters())  # , lr=learning_rate)
@@ -81,9 +78,11 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
     criterion = nn.NLLLoss()
 
     iterations = []
+    loss_history = []
+    train_accuracy_history = defaultdict(list)
+    test_accuracy_history = defaultdict(list)
+
     losses = []
-    train_accuracies = defaultdict(list)
-    test_accuracies = defaultdict(list)
     for idx in range(0, n_iters):
         input_tensor, target_tensor = training_pairs[idx]
 
@@ -93,7 +92,7 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
         if (idx % log_every == 0) or (idx == n_iters - 1):
             iterations.append(idx + 1)
             avg_loss = np.mean(losses)
-            plot_losses.append(avg_loss)
+            loss_history.append(avg_loss)
             print('%s (%d %d%%) %.4f' % (
                 time_since(start, (idx+1) / n_iters),
                 idx+1,
@@ -103,15 +102,15 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
             train_accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, train_pairs, max_len)
 
             for key, value in train_accuracy.items():
-                train_accuracies[key].append(value)
+                train_accuracy_history[key].append(value)
 
             test_accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, test_pairs, max_len)
 
             for key, value in test_accuracy.items():
-                test_accuracies[key].append(value)
+                test_accuracy_history[key].append(value)
 
             losses = []
 
-    show_loss(approach, iterations, plot_losses)
-    show_accuracy(approach, iterations, train_accuracies)
-    show_accuracy(approach, iterations, test_accuracies, is_train=False)
+    show_loss(approach, iterations, loss_history)
+    show_accuracy(approach, iterations, train_accuracy_history)
+    show_accuracy(approach, iterations, test_accuracy_history, is_train=False)
