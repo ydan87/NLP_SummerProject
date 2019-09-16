@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from torch import optim
 import numpy as np
+import pandas as pd
 
 from core.evaluation import evaluate
 from core.lang import EOS_token, SOS_token
@@ -93,11 +94,6 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
             iterations.append(idx + 1)
             avg_loss = np.mean(losses)
             loss_history.append(avg_loss)
-            print('%s (%d %d%%) %.4f' % (
-                time_since(start, (idx+1) / n_iters),
-                idx+1,
-                (idx+1) / n_iters * 100,
-                avg_loss))
 
             train_accuracy = evaluate(encoder, decoder, input_tokenizer, output_tokenizer, train_pairs, max_len)
 
@@ -109,7 +105,21 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
             for key, value in test_accuracy.items():
                 test_accuracy_history[key].append(value)
 
+            print('%s (%d %d%%) %.4f' % (
+                time_since(start, (idx+1) / n_iters),
+                idx+1,
+                (idx+1) / n_iters * 100,
+                avg_loss))
+
             losses = []
+
+    df_train = pd.DataFrame.from_dict(train_accuracy_history)
+    df_train.index = iterations
+    df_test = pd.DataFrame.from_dict(train_accuracy_history)
+    df_test.index = iterations
+
+    df = pd.merge(left=df_train, right=df_test, left_index=True, right_index=True, suffixes=['_train', '_test'])
+    df.to_msgpack(f'results/{approach}.msg')
 
     show_loss(approach, iterations, loss_history)
     show_accuracy(approach, iterations, train_accuracy_history)
