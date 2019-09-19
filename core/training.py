@@ -115,7 +115,7 @@ def train(approach, encoder, decoder, input_tokenizer, output_tokenizer, n_iters
 
     df_train = pd.DataFrame.from_dict(train_accuracy_history)
     df_train.index = iterations
-    df_test = pd.DataFrame.from_dict(train_accuracy_history)
+    df_test = pd.DataFrame.from_dict(test_accuracy_history)
     df_test.index = iterations
 
     df = pd.merge(left=df_train, right=df_test, left_index=True, right_index=True, suffixes=['_train', '_test'])
